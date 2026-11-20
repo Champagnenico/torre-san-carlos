@@ -29,8 +29,8 @@ const int ZUMBADOR = 14;                 // zumbador activo
 
 // Calibración de la torre: distancia del sensor al agua.
 // Debe coincidir con la tabla calibracion de Supabase (en mm).
-const float DIST_LLENO_CM = 20.0;        // sensor a esta distancia = torre llena
-const float DIST_VACIO_CM = 200.0;       // sensor a esta distancia = torre vacía
+const float DIST_LLENO_CM = 3.0;
+const float DIST_VACIO_CM = 16.1;     
 
 // Para probar usa 15000 (15 s). Para el uso real, 900000 (15 minutos).
 const unsigned long INTERVALO_ENVIO_MS = 5000;
