@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Techo del estanque -->
+    <path
+        android:fillColor="#CFE3D3"
+        android:pathData="M33,35L54,23L75,35Z" />
+    <!-- Estanque -->
+    <path
+        android:fillColor="#F1F7F2"
+        android:pathData="M36,35h36v24a4,4 0 0,1 -4,4h-28a4,4 0 0,1 -4,-4z" />
+    <!-- Agua -->
+    <path
+        android:fillColor="#3FA9F5"
+        android:pathData="M39,46C45,43 49,49 54,46C59,43 63,49 69,46L69,58a2,2 0 0,1 -2,2h-26a2,2 0 0,1 -2,-2z" />
+    <!-- Patas -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F1F7F2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M41,63L36,84M67,63L72,84M39,70L69,80M69,70L39,80" />
+    <!-- Suelo -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F1F7F2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M30,85L78,85" />
+</vector>

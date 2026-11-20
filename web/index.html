@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F4D2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Torre de agua">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Torre de agua · Fundo San Carlos</title>
+<style>
+:root{--verde-osc:#1F4D2E;--fondo:#E8EEEA;--verde:#1E7B3A;--rojo:#C62F2F;--amarillo:#F2B705;--azul:#1F5FA8;--gris:#5F6B66;--recibido:#3DDC84;--txt:#14201A;--txt2:#4A5A52;--borde:#C9D6CE}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--fondo);color:var(--txt);font:18px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#app{min-height:100vh;display:flex;flex-direction:column}
+header{background:var(--verde-osc);color:#fff;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px}
+header b{font-size:19px;display:block}header span{font-size:14px;color:#D5E6DA}
+main{flex:1;padding:16px 16px calc(96px + env(safe-area-inset-bottom));max-width:720px;width:100%;margin:0 auto}
+h1{font-size:24px;margin:0 0 12px}h2{font-size:19px;margin:0 0 6px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.small{font-size:14px;color:var(--txt2)}
+.row{display:flex;gap:14px;align-items:flex-start}
+.big{font-size:56px;font-weight:800;line-height:1}.big small{font-size:24px}
+.tag{display:inline-block;padding:6px 14px;border-radius:999px;font-weight:700;font-size:16px}
+.t-NORMAL{background:var(--verde);color:#fff}.t-ATENCION{background:var(--amarillo);color:var(--txt)}
+.t-CRITICA{background:var(--rojo);color:#fff}.t-LLENA{background:var(--azul);color:#fff}.t-SIN{background:var(--gris);color:#fff}
+.lcd{background:#9BB84A;color:#1F2A12;font:700 20px/1.3 ui-monospace,Menlo,Consolas,monospace;border:4px solid #5b6b2a;border-radius:8px;padding:10px 12px;white-space:pre}
+.leds{display:flex;gap:12px;margin-top:12px}.led{width:26px;height:26px;border-radius:50%;background:#555b58}
+.led.on-v{background:#2ecc5b}.led.on-a{background:var(--amarillo)}.led.on-r{background:#ff4040}
+.banner{border-radius:12px;padding:14px;font-weight:700;margin-bottom:14px;border:2px solid}
+.ok{background:#DFF5E6;border-color:var(--verde)}.mal{background:#FBE3E3;border-color:var(--rojo)}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:14px;padding:14px 18px;min-height:52px;background:var(--verde-osc);color:#fff;width:100%;cursor:pointer}
+button:disabled{opacity:.55}button.sec{background:#fff;color:var(--txt);border:2px solid var(--borde)}
+button.recibido{background:var(--recibido);color:var(--txt);font-size:24px;min-height:68px;border-radius:16px}
+label{display:block;font-weight:600;margin:10px 0 4px}
+input{font:inherit;width:100%;padding:13px;border:2px solid var(--borde);border-radius:12px;background:#fff;color:var(--txt)}
+input:focus{outline:3px solid #9fc7ab;border-color:var(--verde)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.chip{width:auto;min-height:44px;padding:8px 16px;background:#fff;color:var(--txt);border:2px solid var(--borde);border-radius:999px}
+.chip.sel{background:var(--verde-osc);color:#fff;border-color:var(--verde-osc)}
+.alerta{display:flex;gap:12px}.barra{width:8px;border-radius:4px;flex:none}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--borde);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{background:none;color:var(--txt2);border-radius:0;padding:8px 2px;min-height:62px;font-size:12px;font-weight:600;position:relative}
+nav button .ic{display:block;font-size:22px}nav button.sel{color:var(--verde-osc)}
+nav button.sel::before{content:"";position:absolute;top:0;left:20%;right:20%;height:4px;background:var(--verde-osc);border-radius:0 0 4px 4px}
+.badge{position:absolute;top:4px;left:56%;background:var(--rojo);color:#fff;border-radius:999px;font-size:11px;padding:1px 6px}
+.login{max-width:480px;margin:0 auto;padding:16px}
+svg text{font:12px system-ui,sans-serif;fill:#4A5A52}
+hr{border:0;border-top:1px solid var(--borde);margin:10px 0}
+
+/* ===== Animaciones ===== */
+@keyframes subir{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes entra{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes llenar{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes dibujar{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes pulso{0%{box-shadow:0 0 0 0 rgba(198,47,47,.55)}70%{box-shadow:0 0 0 12px rgba(198,47,47,0)}100%{box-shadow:0 0 0 0 rgba(198,47,47,0)}}
+@keyframes brillo{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+@keyframes giro{to{transform:rotate(360deg)}}
+.anim>*{animation:subir .5s cubic-bezier(.2,.7,.2,1) both}
+.anim>*:nth-child(2){animation-delay:.06s}.anim>*:nth-child(3){animation-delay:.12s}.anim>*:nth-child(4){animation-delay:.18s}
+.anim>*:nth-child(5){animation-delay:.24s}.anim>*:nth-child(6){animation-delay:.30s}.anim>*:nth-child(n+7){animation-delay:.36s}
+.agua{transform-box:fill-box;transform-origin:bottom}
+.anim .agua{animation:llenar 1.1s cubic-bezier(.2,.7,.2,1) .2s both}
+.anim .linea{stroke-dasharray:1;stroke-dashoffset:0;animation:dibujar 1.2s ease-out .15s both}
+.t-CRITICA{animation:pulso 1.8s infinite}
+.led.on-r{animation:pulso 1.4s infinite,brillo 1.4s infinite}.led.on-v,.led.on-a{animation:brillo 2.4s infinite}
+.aviso{animation:entra .35s cubic-bezier(.2,.7,.2,1)}
+.barra.viva{animation:brillo 1.6s infinite}
+button,.btn,.chip{transition:transform .12s ease,background-color .2s,box-shadow .2s,opacity .2s}
+button:active{transform:scale(.96)}
+button:not(:disabled):hover{box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.card{transition:transform .2s ease,box-shadow .2s ease}
+@media (hover:hover){.card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.14)}}
+nav button{transition:color .2s}nav button::before{transform:scaleX(0);transition:transform .25s ease}nav button.sel::before{transform:scaleX(1)}
+input{transition:border-color .2s,outline-color .2s}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:giro .7s linear infinite;vertical-align:-3px;margin-right:8px}
+.carga{display:flex;align-items:center;gap:12px;color:var(--txt2)}.carga .spin{border-color:#C9D6CE;border-top-color:var(--verde);margin:0}
+.badge{animation:pulso 1.8s infinite}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* ===== Diseño adaptable ===== */
+@media (min-width:600px){
+  main{padding:24px 24px calc(100px + env(safe-area-inset-bottom));max-width:860px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-content:start}
+  h1{font-size:28px}.big{font-size:64px}
+  .card{margin-bottom:0}
+  main>h1,main>h2,main>.banner,main>.chips,main>button{grid-column:1/-1}
+}
+@media (min-width:900px){
+  #app.con-nav header,#app.con-nav main{margin-left:230px}
+  #app.con-nav main{max-width:none;padding:28px 40px 40px}
+  #app.con-nav header{padding-left:40px}
+  main{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+  nav{top:0;right:auto;bottom:0;width:230px;flex-direction:column;border-top:0;border-right:1px solid var(--borde);padding:96px 12px 16px;gap:4px}
+  nav button{display:flex;align-items:center;gap:14px;text-align:left;font-size:16px;min-height:52px;padding:10px 16px;border-radius:12px}
+  nav button .ic{display:inline-block;width:28px;text-align:center;font-size:22px}
+  nav button::before{display:none}
+  nav button.sel{background:#E3EDE6}
+  nav button:hover{background:#EEF3EF}
+  .badge{position:static;margin-left:auto}
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+// ---- Configuración (clave PÚBLICA publishable; la seguridad la dan las políticas RLS) ----
+const SB_URL = "https://tzjziqjrxgquzkjbldml.supabase.co";
+const SB_KEY = "sb_publishable_JRIYQnzJUw_NCfu7hDuhLA_lQ5rH5Yq";
+const REFRESCO_MS = 3000, SIN_CONEXION_MIN = 30, CAPACIDAD_FALLBACK = 30000;
+
+// ---- Estado ----
+const S = { ses: cargarSesion(), perfil: null, sinAcceso: false, cargo: false, nivel: null, alertas: [], umbrales: [],
+  puntos: [], horas: 24, equipos: [], eventos: [], bitacora: [], tab: "estado", aviso: null, anim: true, errRed: null,
+  errLogin: null, entrando: false, rol: 2, guardando: false, creando: false };
+
+function cargarSesion(){ try{ return JSON.parse(localStorage.getItem("torre_ses")||"null"); }catch(e){ return null; } }
+function guardarSesion(s){ S.ses=s; try{ s?localStorage.setItem("torre_ses",JSON.stringify(s)):localStorage.removeItem("torre_ses"); }catch(e){} }
+
+// ---- Utilidades ----
+const esc = t => String(t==null?"":t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = id => document.getElementById(id);
+const miles = n => new Intl.NumberFormat("es-CL").format(Math.round(n));
+const ent = n => Math.round(Number(n));
+const hora = ms => new Date(ms).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"});
+const fechaHora = ms => new Date(ms).toLocaleString("es-CL",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const ts = s => new Date(s).getTime();
+
+class ApiError extends Error{ constructor(c,m){ super(m); this.codigo=c; } }
+
+async function http(metodo, ruta, cuerpo, opc={}){
+  const h = { apikey: SB_KEY, Accept: "application/json" };
+  if(cuerpo!==undefined) h["Content-Type"]="application/json";
+  if(opc.auth!==false) h.Authorization = "Bearer " + (await tokenVigente());
+  Object.assign(h, opc.extra||{});
+  let r;
+  try{ r = await fetch(SB_URL+ruta,{method:metodo,headers:h,body:cuerpo===undefined?undefined:JSON.stringify(cuerpo)}); }
+  catch(e){ throw new ApiError(0,"Sin conexión con el servidor"); }
+  const txt = await r.text();
+  if(!r.ok){
+    let m = "Error "+r.status;
+    try{ const o=JSON.parse(txt); m=o.message||o.msg||o.error_description||o.error||m; }catch(e){}
+    throw new ApiError(r.status,m);
+  }
+  return txt?JSON.parse(txt):null;
+}
+const get = ruta => http("GET","/rest/v1/"+ruta);
+
+let refrescando = null;
+async function tokenVigente(){
+  const s = S.ses; if(!s) throw new ApiError(401,"Sin sesión");
+  if(s.exp-60 > Date.now()/1000) return s.token;
+  if(!refrescando){
+    refrescando = http("POST","/auth/v1/token?grant_type=refresh_token",{refresh_token:s.refresh},{auth:false})
+      .then(o=>{ nuevaSesion(o); return S.ses.token; })
+      .catch(e=>{ throw new ApiError(e.codigo===0?0:401, e.codigo===0?e.message:"Tu sesión expiró"); })
+      .finally(()=>{ refrescando=null; });
+  }
+  return refrescando;
+}
+function nuevaSesion(o){
+  guardarSesion({token:o.access_token,refresh:o.refresh_token,exp:Math.floor(Date.now()/1000)+(o.expires_in||3600),uid:o.user.id,email:o.user.email||""});
+}
+
+// ---- Estado de la torre ----
+function estadoUi(n){
+  if(!n || Date.now()-n.ts > SIN_CONEXION_MIN*60000) return {k:"SIN",txt:"Sensor sin conexión"};
+  return ({CRITICA:{k:"CRITICA",txt:"Crítico"},ATENCION:{k:"ATENCION",txt:"Atención"},LLENA:{k:"LLENA",txt:"Llena"}})[n.estado]||{k:"NORMAL",txt:"Normal"};
+}
+function lineasLcd(n,e){
+  if(!n || e.k==="SIN") return ["Sin lectura","Sensor sin conex."];
+  const l2={NORMAL:"Normal",ATENCION:"ATENCION",CRITICA:"CRITICO: bombear",LLENA:"LLENA: detener"}[e.k];
+  return ["Torre: "+ent(n.pct)+" %", l2];
+}
+const COLOR={NORMAL:"var(--verde)",ATENCION:"var(--amarillo)",CRITICA:"var(--rojo)",LLENA:"var(--azul)",SIN:"var(--gris)"};
+
+const puedeConfirmar = () => S.perfil && [1,2,4].includes(S.perfil.id_rol);
+const veEquipos = () => S.perfil && [1,3].includes(S.perfil.id_rol);
+const esAdmin = () => S.perfil && S.perfil.id_rol===1;
+const ROLES = {1:"Administrador",2:"Operador",3:"Mantención",4:"Reemplazante"};
+
+// ---- Carga de datos ----
+async function cargarTodo(){
+  const uid = S.ses.uid;
+  const p = await get("perfil?select=nombre,cargo,id_rol&id_perfil=eq."+uid);
+  if(!p.length){ S.perfil=null; S.sinAcceso=true; return; }
+  S.sinAcceso=false; S.perfil=p[0];
+  const desde = new Date(Date.now()-S.horas*3600000).toISOString();
+  const adm = esAdmin(), eq = veEquipos();
+  const [nv, al, um, pts, nodos, cal, ev, bit] = await Promise.all([
+    get("v_nivel_actual?select=*"),
+    get("alerta?select=id_alerta,tipo,abierta_en,cerrada_en,lectura(nivel_pct),confirmacion(confirmada_en)&order=abierta_en.desc&limit=20"),
+    get("umbral?select=tipo,operador,valor_pct,histeresis_pct"),
+    get("lectura?select=ts_lectura,nivel_pct&validez=eq.VALIDO&ts_lectura=gte."+desde+"&order=ts_lectura.asc&limit=1000"),
+    eq?get("nodo?select=dev_eui,activo"):[],
+    eq?get("calibracion?select=dist_vacia_mm,dist_llena_mm&order=vigente_desde.desc&limit=1"):[],
+    eq?get("evento_dispositivo?select=tipo,detalle,ocurrido_en&order=ocurrido_en.desc&limit=5"):[],
+    adm?get("bitacora?select=accion,detalle,creado_en&order=creado_en.desc&limit=15"):[],
+  ]);
+  S.nivel = nv.length ? { dep:nv[0].nombre, cap:nv[0].capacidad_l, ts:ts(nv[0].ts_lectura), pct:Number(nv[0].nivel_pct), vol:nv[0].volumen_l, estado:nv[0].estado } : null;
+  S.alertas = al.map(o=>{
+    const l = Array.isArray(o.lectura)?o.lectura[0]:o.lectura, c = Array.isArray(o.confirmacion)?o.confirmacion[0]:o.confirmacion;
+    return { id:o.id_alerta, tipo:o.tipo, abierta:ts(o.abierta_en), cerrada:o.cerrada_en?ts(o.cerrada_en):null,
+      pct:l&&l.nivel_pct!=null?Number(l.nivel_pct):null, conf:c?ts(c.confirmada_en):null };
+  });
+  S.umbrales = um.map(o=>({tipo:o.tipo,valor:Number(o.valor_pct)}));
+  S.puntos = pts.map(o=>({t:ts(o.ts_lectura),v:Number(o.nivel_pct)}));
+  S.equipos = nodos.map(o=>({eui:o.dev_eui,activo:o.activo,vacia:cal[0]&&cal[0].dist_vacia_mm,llena:cal[0]&&cal[0].dist_llena_mm}));
+  S.eventos = ev.map(o=>({tipo:o.tipo,motivo:(o.detalle&&o.detalle.motivo)||"",t:ts(o.ocurrido_en)}));
+  S.bitacora = bit.map(o=>{
+    const d=o.detalle||{};
+    let t=o.accion;
+    if(o.accion==="CAMBIO_UMBRAL") t="Umbral "+String(d.tipo||"").toLowerCase()+" cambiado de "+d.antes+" % a "+d.despues+" %";
+    else if(o.accion==="CONFIRMA_ALERTA") t="Alerta "+d.id_alerta+" confirmada";
+    else if(o.accion==="CREA_USUARIO"||o.accion==="CREAR_USUARIO") t="Usuario creado: "+(d.email||"")+(ROLES[d.id_rol]?" ("+ROLES[d.id_rol]+")":"");
+    else t=String(o.accion).replace(/_/g," ").toLowerCase().replace(/^./,c=>c.toUpperCase());
+    return {texto:t,t:ts(o.creado_en)};
+  });
+  if(!S.cargo) S.anim=true;
+  S.cargo = true;
+}
+
+async function refrescar(vivo){
+  if(!S.ses) return;
+  try{
+    await cargarTodo(); S.errRed=null;
+  }catch(e){
+    if(e.codigo===401) return cerrarSesion("Tu sesión expiró. Vuelve a iniciar sesión.");
+    S.errRed = e.codigo===0 ? "Sin conexión: se muestran los últimos datos recibidos." : e.message;
+  }
+  vivo ? renderVivo() : render();
+}
+
+// ---- Acciones ----
+const CORREO_VALIDO=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+async function entrar(){
+  const correo=$("c").value.trim(), clave=$("k").value;
+  if(!correo||!clave){ S.errLogin="Escribe tu correo y tu contraseña"; return render(); }
+  if(!CORREO_VALIDO.test(correo)){ S.errLogin="Escribe un correo válido, por ejemplo nombre@dominio.cl"; return render(); }
+  S.entrando=true; S.errLogin=null; render();
+  try{
+    nuevaSesion(await http("POST","/auth/v1/token?grant_type=password",{email:correo,password:clave},{auth:false}));
+    S.entrando=false; S.cargo=false; render(); await refrescar();
+  }catch(e){
+    S.entrando=false;
+    S.errLogin = e.codigo===0 ? e.message : (e.codigo===400||e.codigo===401) ? "Correo o contraseña incorrectos" : e.message;
+    render();
+  }
+}
+function cerrarSesion(msg){
+  const t=S.ses&&S.ses.token;
+  if(t) fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:"{}"}).catch(()=>{});
+  guardarSesion(null);
+  Object.assign(S,{perfil:null,sinAcceso:false,cargo:false,nivel:null,alertas:[],tab:"estado",errLogin:msg||null,aviso:null});
+  render();
+}
+function avisar(texto,ok){ S.aviso={texto,ok}; render(); clearTimeout(avisar.t); avisar.t=setTimeout(()=>{S.aviso=null;render();},6000); }
+
+async function confirmar(id){
+  try{
+    await http("POST","/rest/v1/confirmacion",{id_alerta:id,id_perfil:S.ses.uid},{extra:{Prefer:"return=minimal"}});
+    avisar("Alerta confirmada: «Recibido»",true);
+  }catch(e){
+    if(e.codigo===409) avisar("Esa alerta ya estaba confirmada",true);
+    else if(e.codigo===401) return cerrarSesion("Tu sesión expiró. Vuelve a iniciar sesión.");
+    else avisar("No se pudo confirmar: "+e.message,false);
+  }
+  refrescar();
+}
+async function guardarUmbrales(){
+  const l=parseFloat($("u-llena").value.replace(",",".")), a=parseFloat($("u-aten").value.replace(",",".")), c=parseFloat($("u-crit").value.replace(",","."));
+  if([l,a,c].some(v=>isNaN(v)||v<0||v>100)) return avisar("Los valores deben estar entre 0 y 100",false);
+  if(!(c<a && a<l)) return avisar("Debe cumplirse: crítico < atención < llena",false);
+  S.guardando=true; render();
+  try{
+    for(const [tipo,v] of [["LLENA",l],["ATENCION",a],["CRITICA",c]]){
+      const r = await http("PATCH","/rest/v1/umbral?tipo=eq."+tipo,{valor_pct:v},{extra:{Prefer:"return=representation"}});
+      if(!r.length) throw new ApiError(403,"No tienes permiso para cambiar los umbrales");
+    }
+    S.guardando=false; avisar("Umbral guardado con éxito",true);
+  }catch(e){ S.guardando=false; avisar("No se pudo guardar: "+e.message,false); }
+  refrescar();
+}
+async function crearUsuario(){
+  const v={n:$("n-nom").value.trim(),g:$("n-car").value.trim(),c:$("n-cor").value.trim(),k:$("n-cla").value};
+  if(!v.n||!v.c||!v.k) return avisar("Completa nombre, correo y contraseña",false);
+  if(!CORREO_VALIDO.test(v.c)) return avisar("Escribe un correo válido, por ejemplo nombre@dominio.cl",false);
+  if(v.n.length<2||v.n.length>80) return avisar("El nombre debe tener entre 2 y 80 caracteres",false);
+  if(v.g.length>80) return avisar("El cargo no puede superar los 80 caracteres",false);
+  if(v.k.length<8) return avisar("La contraseña debe tener al menos 8 caracteres",false);
+  S.creando=true; render();
+  try{
+    await http("POST","/functions/v1/crear-usuario",{email:v.c,password:v.k,nombre:v.n,cargo:v.g,id_rol:S.rol});
+    S.creando=false; S.rol=2; avisar("Usuario creado: "+v.c,true);
+    ["n-nom","n-car","n-cor","n-cla"].forEach(i=>{ if($(i)) $(i).value=""; });
+  }catch(e){ S.creando=false; avisar("No se pudo crear: "+e.message,false); }
+}
+
+// ---- Pantallas ----
+function pEstado(){
+  const n=S.nivel, e=estadoUi(n);
+  let h='<h1>Estado ahora</h1>';
+  if(S.errRed) h+='<div class="banner mal">'+esc(S.errRed)+'</div>';
+  h+='<div class="card">';
+  if(!n){
+    h+='<h2>Torre de agua</h2>'+(S.cargo?'<span class="tag t-SIN">Sensor sin conexión</span><p>Todavía no hay mediciones. Cuando el nodo envíe la primera, aparecerá aquí.</p>':'<div class="carga"><span class="spin"></span>Cargando…</div>');
+  }else{
+    const hace=Math.max(0,Math.floor((Date.now()-n.ts)/60000));
+    h+='<div class="row">'+torre(n.pct,COLOR[e.k])+'<div><h2>'+esc(n.dep)+'</h2><div class="big"><span data-cuenta="'+ent(n.pct)+'">'+ent(n.pct)+'</span><small> %</small></div>'
+      +'<div>≈ '+miles(n.vol)+' de '+miles(n.cap||CAPACIDAD_FALLBACK)+' L</div><div style="margin-top:8px"><span class="tag t-'+e.k+'">'+esc(e.txt)+'</span></div></div></div>'
+      +'<p class="small" style="margin-bottom:0">Última lectura: '+hora(n.ts)+' · hace '+hace+' min</p>';
+    if(e.k==="SIN") h+='<p>El valor mostrado es el último que llegó; no hay mediciones recientes. Esto no significa que la torre esté en 0 %.</p>';
+  }
+  h+='</div>';
+  const [l1,l2]=lineasLcd(n,e);
+  const led=(k,cl)=>'<div class="led'+(e.k===k?' '+cl:'')+'"></div>';
+  h+='<div class="card"><h2>Así lo ve el nodo en la torre</h2><div class="lcd">'+esc(l1.padEnd(16))+'\n'+esc(l2.padEnd(16))+'</div>'
+    +'<div class="leds">'+led("NORMAL","on-v")+led("ATENCION","on-a")+led("CRITICA","on-r")+'</div>'
+    +'<p class="small" style="margin-bottom:0">Pantalla LCD y LED del nodo: avisan en el lugar aunque no haya internet.</p></div>';
+  return h;
+}
+function torre(pct,color){
+  const alto=Math.max(0,Math.min(100,pct))*0.74;
+  return '<svg width="86" height="124" viewBox="0 0 86 124" aria-hidden="true">'
+   +'<rect x="8" y="6" width="70" height="78" rx="8" fill="#fff" stroke="#14201A" stroke-width="4"/>'
+   +'<clipPath id="cp"><rect x="10" y="8" width="66" height="74" rx="6"/></clipPath>'
+   +'<rect class="agua" x="10" y="'+(82-alto)+'" width="66" height="'+alto+'" fill="'+color+'" clip-path="url(#cp)"/>'
+   +'<path d="M22 84 L16 120 M64 84 L70 120 M43 84 V120 M18 104 H68" stroke="#14201A" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+}
+function tituloAlerta(a){
+  const p=a.pct!=null?ent(a.pct)+" %":"";
+  return a.tipo==="CRITICA"?"Crítico: torre de agua en "+p:a.tipo==="ATENCION"?"Atención: torre de agua en "+p:"Torre llena: "+p;
+}
+const INSTR={CRITICA:"Encienda el bombeo ahora.",ATENCION:"Prepare el bombeo: el nivel está bajando.",LLENA:"Detenga el bombeo."};
+const CAL={CRITICA:"var(--rojo)",ATENCION:"var(--amarillo)",LLENA:"var(--azul)"};
+function pAlertas(){
+  const ab=S.alertas.filter(a=>!a.cerrada), ant=S.alertas.filter(a=>a.cerrada).slice(0,15);
+  let h='<h1>Alertas</h1>';
+  if(!ab.length) h+='<div class="card"><span class="tag t-NORMAL">Normal</span><p style="margin-bottom:0">No hay alertas abiertas.</p></div>';
+  ab.forEach(a=>{
+    const min=Math.max(0,Math.floor((Date.now()-a.abierta)/60000));
+    h+='<div class="card"><div class="alerta"><div class="barra'+(a.conf?'':' viva')+'" style="background:'+CAL[a.tipo]+'"></div><div><h2>'+esc(tituloAlerta(a))+'</h2><div>'+esc(INSTR[a.tipo]||"")+'</div><div class="small">Desde las '+hora(a.abierta)+' ('+min+' min)</div></div></div><div style="height:12px"></div>';
+    if(a.conf) h+='<div class="banner ok" style="margin:0">Recibido a las '+hora(a.conf)+'</div>';
+    else if(puedeConfirmar()) h+='<button class="recibido" data-conf="'+a.id+'">Recibido</button>';
+    else h+='<div class="small">Tu cargo no puede confirmar alertas.</div>';
+    h+='</div>';
+  });
+  if(ant.length){
+    h+='<h2 style="margin-top:20px">Anteriores</h2><div class="card">'+ant.map(a=>'<div><b>'+esc(tituloAlerta(a))+'</b><div class="small">'+fechaHora(a.abierta)+' → '+fechaHora(a.cerrada)+' · '+(a.conf?'confirmada '+fechaHora(a.conf):'sin confirmar')+'</div></div>').join("<hr>")+'</div>';
+  }
+  if(esAdmin()&&S.bitacora.length) h+='<h2 style="margin-top:20px">Bitácora</h2><div class="card">'+S.bitacora.map(b=>'<div>'+esc(b.texto)+'<div class="small">'+fechaHora(b.t)+'</div></div>').join("<hr>")+'</div>';
+  return h;
+}
+function pHistorial(){
+  let h='<h1>Historial</h1><div class="chips">'+[["Día",24],["Semana",168],["Mes",720]].map(([t,v])=>'<button class="chip'+(S.horas===v?' sel':'')+'" data-horas="'+v+'">'+t+'</button>').join("")+'</div>';
+  h+='<div class="card"><h2>Nivel de la torre (%)</h2>';
+  const p=S.puntos;
+  if(p.length<2) h+='<p class="small">Aún no hay suficientes mediciones en este período.</p>';
+  else{
+    const W=320,H=200,L=34,T=8,B=8,w=W-L-4,hh=H-T-B,t0=p[0].t,dt=Math.max(1,p[p.length-1].t-t0);
+    const y=v=>T+hh*(1-Math.min(100,Math.max(0,v))/100), x=t=>L+w*((t-t0)/dt);
+    let g="";
+    [0,25,50,75,100].forEach(v=>{ g+='<line x1="'+L+'" x2="'+(W-4)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#C9D6CE"/><text x="0" y="'+(y(v)+4)+'">'+v+'</text>'; });
+    const um=t=>S.umbrales.find(u=>u.tipo===t);
+    [["LLENA","#1F5FA8"],["ATENCION","#F2B705"],["CRITICA","#C62F2F"]].forEach(([t,c])=>{ const u=um(t); if(u) g+='<line x1="'+L+'" x2="'+(W-4)+'" y1="'+y(u.valor)+'" y2="'+y(u.valor)+'" stroke="'+c+'" stroke-width="2" stroke-dasharray="6 5"/>'; });
+    g+='<polyline class="linea" pathLength="1" fill="none" stroke="#1F4D2E" stroke-width="2.5" stroke-linejoin="round" points="'+p.map(q=>x(q.t).toFixed(1)+","+y(q.v).toFixed(1)).join(" ")+'"/>';
+    h+='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Gráfico del nivel">'+g+'</svg>'
+      +'<div class="small" style="display:flex;justify-content:space-between"><span>'+fechaHora(p[0].t)+'</span><span>'+fechaHora(p[p.length-1].t)+'</span></div>'
+      +'<div class="small" style="margin-top:8px">'+S.umbrales.filter(u=>["LLENA","ATENCION","CRITICA"].includes(u.tipo)).map(u=>'--- '+({LLENA:"Llena",ATENCION:"Atención",CRITICA:"Crítico"})[u.tipo]+' '+ent(u.valor)+' %').join("<br>")+'</div>';
+  }
+  h+='</div>';
+  if(p.length){ const vs=p.map(q=>q.v); h+='<div class="card">Mínimo del período: '+ent(Math.min(...vs))+' %<br>Máximo del período: '+ent(Math.max(...vs))+' %<br><span class="small">Mediciones: '+p.length+'</span></div>'; }
+  return h;
+}
+function pEquipos(){
+  let h='<h1>Equipos</h1>';
+  if(!S.equipos.length) h+='<div class="card">No hay equipos registrados.</div>';
+  S.equipos.forEach(e=>{ h+='<div class="card"><h2>Nodo de la torre</h2>Identificador: '+esc(e.eui)+'<br><b>Estado: '+(e.activo?'activo':'desactivado')+'</b>'
+    +(e.vacia!=null?'<hr><h2>Calibración</h2>Torre vacía: '+e.vacia+' mm<br>Torre llena: '+e.llena+' mm':'')+'</div>'; });
+  h+='<h2>Eventos recientes</h2><div class="card">'+(S.eventos.length?S.eventos.map(v=>'<div><b>'+esc(v.tipo.replace(/_/g," "))+'</b>'+(v.motivo?'<div>'+esc(v.motivo)+'</div>':'')+'<div class="small">'+fechaHora(v.t)+'</div></div>').join("<hr>"):'Sin eventos registrados.')+'</div>';
+  return h;
+}
+function pCuenta(){
+  const p=S.perfil, um=t=>{ const u=S.umbrales.find(x=>x.tipo===t); return u?u.valor:""; };
+  let h='<h1>'+(esAdmin()?"Administrar":"Mi cuenta")+'</h1>';
+  h+='<div class="card"><h2>'+esc(p.nombre)+'</h2>'+esc(p.cargo||"")+'<div>Rol: '+ROLES[p.id_rol]+'</div><div class="small">'+esc(S.ses.email)+'</div></div>';
+  if(esAdmin()){
+    h+='<div class="card"><h2>Umbrales de alerta (%)</h2><div class="small">Crítico &lt; Atención &lt; Llena. Cada cambio queda en la bitácora.</div>'
+      +'<label for="u-llena">Llena (detener bombeo)</label><input id="u-llena" inputmode="decimal" value="'+esc(um("LLENA"))+'">'
+      +'<label for="u-aten">Atención</label><input id="u-aten" inputmode="decimal" value="'+esc(um("ATENCION"))+'">'
+      +'<label for="u-crit">Crítico (encender bombeo)</label><input id="u-crit" inputmode="decimal" value="'+esc(um("CRITICA"))+'">'
+      +'<div style="height:14px"></div><button id="b-umb"'+(S.guardando?' disabled':'')+'>'+(S.guardando?'<span class="spin"></span>Guardando…':"Guardar umbrales")+'</button></div>';
+    h+='<div class="card"><h2>Crear usuario</h2><div class="small">La persona entra con este correo y contraseña. Dile la contraseña en persona.</div>'
+      +'<label for="n-nom">Nombre</label><input id="n-nom" autocomplete="off">'
+      +'<label for="n-car">Cargo (ej. Capataz)</label><input id="n-car" autocomplete="off">'
+      +'<label for="n-cor">Correo</label><input id="n-cor" type="email" autocomplete="off" autocapitalize="off">'
+      +'<label for="n-cla">Contraseña (mínimo 8)</label><input id="n-cla" type="password" autocomplete="new-password">'
+      +'<label>Rol</label><div class="chips">'+Object.entries(ROLES).map(([id,t])=>'<button class="chip'+(S.rol==id?' sel':'')+'" data-rol="'+id+'">'+t+'</button>').join("")+'</div>'
+      +'<div style="height:10px"></div><button id="b-crear"'+(S.creando?' disabled':'')+'>'+(S.creando?'<span class="spin"></span>Creando…':"Crear usuario")+'</button></div>';
+  }
+  h+='<button class="sec" id="b-salir">Cerrar sesión</button>';
+  return h;
+}
+
+function pLogin(){
+  return '<header><b>Fundo San Carlos</b><span>Inicia sesión para ver el nivel</span></header><div class="login anim"><h1 style="margin-top:16px">Iniciar sesión</h1><div class="card">'
+    +'<label for="c">Correo</label><input id="c" type="email" autocomplete="username" autocapitalize="off">'
+    +'<label for="k">Contraseña</label><input id="k" type="password" autocomplete="current-password">'
+    +(S.errLogin?'<div class="banner mal" style="margin-top:14px">'+esc(S.errLogin)+'</div>':'')
+    +'<div style="height:16px"></div><button id="b-entrar"'+(S.entrando?' disabled':'')+'>'+(S.entrando?'<span class="spin"></span>Entrando…':"Entrar")+'</button></div>'
+    +'<p class="small">El acceso a este sistema es administrado por el Fundo Agrícola San Carlos. Las cuentas son creadas exclusivamente por el administrador; si requiere acceso, le solicitamos dirigirse a él.</p></div>';
+}
+function pSinAcceso(){
+  return '<header><b>Fundo San Carlos</b><span>Nivel de la torre de agua</span></header><div class="login"><h1 style="margin-top:16px">Sin acceso</h1><div class="card">'
+    +'<p>Tu cuenta existe, pero todavía no tiene permisos para ver el sistema (puede estar inactiva o vencida). Avisa al administrador.</p><button class="sec" id="b-salir">Cerrar sesión</button></div></div>';
+}
+
+const TABS=[["estado","⌂","Estado"],["alertas","!","Alertas"],["historial","≈","Historial"],["equipos","⚙","Equipos"],["cuenta","☰","Cuenta"]];
+function nav(){
+  const abiertas=S.alertas.filter(a=>!a.cerrada).length;
+  return '<nav>'+TABS.filter(t=>t[0]!=="equipos"||veEquipos()).map(t=>'<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'sel':'')+'"><span class="ic">'+t[1]+'</span>'
+    +(t[0]==="cuenta"&&esAdmin()?"Administrar":t[2])+(t[0]==="alertas"&&abiertas?'<span class="badge">'+abiertas+'</span>':'')+'</button>').join("")+'</nav>';
+}
+function contenido(){
+  if(S.tab==="equipos"&&!veEquipos()) S.tab="estado";
+  return ({estado:pEstado,alertas:pAlertas,historial:pHistorial,equipos:pEquipos,cuenta:pCuenta})[S.tab]();
+}
+
+// ---- Render ----
+function render(){
+  const raiz=$("app");
+  if(!S.ses){ raiz.innerHTML=pLogin(); enlazar(); return; }
+  if(S.sinAcceso){ raiz.innerHTML=pSinAcceso(); enlazar(); return; }
+  if(!S.perfil){ raiz.className=""; raiz.innerHTML='<header><b>Fundo San Carlos</b><span>Nivel de la torre de agua</span></header><main><div class="carga"><span class="spin"></span>Cargando…</div></main>'; return; }
+  raiz.className="con-nav";
+  // conserva lo escrito en los formularios al redibujar
+  const guardado={}; raiz.querySelectorAll("input").forEach(i=>{ if(i.id) guardado[i.id]=i.value; });
+  const anim=S.anim; S.anim=false;
+  raiz.innerHTML='<header><b>Fundo San Carlos</b><span>Nivel de la torre de agua</span></header><main'+(anim?' class="anim"':'')+'>'
+    +(S.aviso?'<div class="banner aviso '+(S.aviso.ok?'ok':'mal')+'">'+esc(S.aviso.texto)+'</div>':'')+contenido()+'</main>'+nav();
+  Object.entries(guardado).forEach(([id,v])=>{ const i=$(id); if(i&&!i.value) i.value=v; });
+  enlazar();
+  if(anim) contar();
+}
+function contar(){
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+  document.querySelectorAll("[data-cuenta]").forEach(el=>{
+    const fin=Number(el.dataset.cuenta), t0=performance.now(), dur=1000;
+    (function paso(t){ const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3); el.textContent=Math.round(fin*e); if(k<1) requestAnimationFrame(paso); else el.textContent=Math.round(fin); })(t0);
+  });
+}
+function renderVivo(){ // actualización automática: no toca la pestaña de formularios
+  if(S.ses && S.perfil && S.tab!=="cuenta") render(); else if(S.ses && S.perfil){ const b=document.querySelector("nav"); if(b) b.outerHTML=nav(); enlazar(); }
+}
+function enlazar(){
+  const on=(sel,fn)=>document.querySelectorAll(sel).forEach(el=>el.onclick=()=>fn(el));
+  on("[data-tab]",el=>{ S.tab=el.dataset.tab; S.anim=true; render(); window.scrollTo(0,0); });
+  on("[data-conf]",el=>{ el.disabled=true; confirmar(Number(el.dataset.conf)); });
+  on("[data-horas]",el=>{ S.horas=Number(el.dataset.horas); S.anim=true; render(); refrescar(); });
+  on("[data-rol]",el=>{ S.rol=Number(el.dataset.rol); render(); });
+  const b=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
+  b("b-entrar",entrar); b("b-salir",()=>cerrarSesion()); b("b-umb",guardarUmbrales); b("b-crear",crearUsuario);
+  const k=$("k"); if(k) k.onkeydown=e=>{ if(e.key==="Enter") entrar(); };
+}
+
+// ---- Arranque ----
+render();
+if(S.ses) refrescar();
+setInterval(()=>{ if(S.ses && !document.hidden) refrescar(true); }, REFRESCO_MS);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && S.ses) refrescar(true); });
+</script>
+</body>
+</html>
