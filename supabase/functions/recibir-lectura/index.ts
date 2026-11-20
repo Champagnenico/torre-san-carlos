@@ -19,6 +19,8 @@ const supabase = createClient(
 const TOKEN = Deno.env.get("TOKEN_NODO_TORRE") ?? "";
 
 const SALTO_MAX_PCT_15MIN = 15; // salto de nivel imposible en 15 min => lectura dudosa
+const CONFIRMAR_LECTURAS = 3; // un cambio brusco que se mantiene en este número de lecturas seguidas es real
+const TOLERANCIA_CONFIRMAR_PCT = 2;
 const SEVERIDAD: Record<string, number> = { ATENCION: 1, CRITICA: 2 };
 
 const json = (body: unknown, status: number) =>
@@ -96,6 +98,16 @@ Deno.serve(async (req) => {
     const min = (ts.getTime() - new Date(prev.ts_lectura).getTime()) / 60_000;
     const permitido = SALTO_MAX_PCT_15MIN * Math.max(1, min / 15);
     if (Math.abs(nivel - Number(prev.nivel_pct)) > permitido) validez = "DUDOSO";
+  }
+
+  // Un cambio brusco que se mantiene en lecturas seguidas es real: se acepta como válido.
+  if (validez === "DUDOSO") {
+    const { data: rec } = await supabase.from("lectura").select("nivel_pct")
+      .eq("id_nodo", nodo.id_nodo).lt("ts_lectura", ts.toISOString())
+      .gte("ts_lectura", new Date(ts.getTime() - 5 * 60_000).toISOString())
+      .order("ts_lectura", { ascending: false }).limit(CONFIRMAR_LECTURAS - 1);
+    if (rec && rec.length === CONFIRMAR_LECTURAS - 1 &&
+        rec.every((r) => Math.abs(Number(r.nivel_pct) - nivel) <= TOLERANCIA_CONFIRMAR_PCT)) validez = "VALIDO";
   }
 
   // 5. Estado según los umbrales (solo si la lectura es válida)

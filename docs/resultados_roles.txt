@@ -1,0 +1,18 @@
+﻿Operador | Ver nivel actual (v_nivel_actual) | HTTP 200 | filas 1
+Operador | Ver lecturas | HTTP 200 | filas 1
+Operador | Ver detalle de nodos | HTTP 200 | filas 1
+Operador | Editar umbral (mismo valor 15) | HTTP 200 | filas afectadas 1
+Operador | Insertar una medicion | HTTP 403 | {"code":"42501","details":null,"hint":"Grant the required privileges to the current role with: GRANT INSERT ON public.lectura TO authenticated;","message":"permission denied for table lectura"}
+Operador | Llamar crear-usuario | HTTP 403 | {"error":"Solo un administrador puede crear usuarios"}
+Mantencion | Ver nivel actual (v_nivel_actual) | HTTP 200 | filas 1
+Mantencion | Ver lecturas | HTTP 200 | filas 1
+Mantencion | Ver detalle de nodos | HTTP 200 | filas 1
+Mantencion | Editar umbral (mismo valor 15) | HTTP 200 | filas afectadas 1
+Mantencion | Insertar una medicion | HTTP 403 | {"code":"42501","details":null,"hint":"Grant the required privileges to the current role with: GRANT INSERT ON public.lectura TO authenticated;","message":"permission denied for table lectura"}
+Mantencion | Llamar crear-usuario | HTTP 403 | {"error":"Solo un administrador puede crear usuarios"}
+Reemplazante | Ver nivel actual (v_nivel_actual) | HTTP 200 | filas 1
+Reemplazante | Ver lecturas | HTTP 200 | filas 1
+Reemplazante | Ver detalle de nodos | HTTP 200 | filas 1
+Reemplazante | Editar umbral (mismo valor 15) | HTTP 200 | filas afectadas 1
+Reemplazante | Insertar una medicion | HTTP 403 | {"code":"42501","details":null,"hint":"Grant the required privileges to the current role with: GRANT INSERT ON public.lectura TO authenticated;","message":"permission denied for table lectura"}
+Reemplazante | Llamar crear-usuario | HTTP 403 | {"error":"Solo un administrador puede crear usuarios"}

@@ -1,0 +1,12 @@
+﻿EF-02 sin x-token | esperado 401 | obtenido 401 | APROBADA | {"error":"no autorizado"}
+EF-03 x-token incorrecto | esperado 401 | obtenido 401 | APROBADA | {"error":"no autorizado"}
+EF-04 metodo GET | esperado 405 | obtenido 405 | APROBADA | {"error":"método no permitido"}
+EF-05a cuerpo no es JSON | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"JSON inválido"}
+EF-05b faltan campos | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"seq fuera de rango"}
+EF-06 nodo desconocido | esperado 403 | obtenido 403 | APROBADA | {"ok":false,"error":"nodo no registrado"}
+EF-07a distancia 19 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"distancia fuera del rango del sensor"}
+EF-07b distancia 4001 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"distancia fuera del rango del sensor"}
+EF-08a seq -1 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"seq fuera de rango"}
+EF-08b seq 65536 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"seq fuera de rango"}
+EF-09a edad_min -1 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"edad_min inválida"}
+EF-09b edad_min 10081 | esperado 400 | obtenido 400 | APROBADA | {"ok":false,"error":"edad_min inválida"}
