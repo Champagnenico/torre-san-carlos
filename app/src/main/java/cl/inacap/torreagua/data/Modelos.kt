@@ -55,6 +55,23 @@ data class Equipo(val devEui: String, val activo: Boolean, val distVaciaMm: Int?
 
 data class EventoDisp(val tipo: String, val motivo: String, val ts: Long)
 
+data class Usuario(
+    val id: String,
+    val nombre: String,
+    val cargo: String?,
+    val idRol: Int,
+    val activo: Boolean,
+    val esYo: Boolean,
+) {
+    val rol: String
+        get() = when (idRol) {
+            1 -> "Administrador"
+            2 -> "Operador"
+            3 -> "Mantención"
+            else -> "Reemplazante"
+        }
+}
+
 data class Bitacora(val texto: String, val ts: Long)
 
 object Fechas {

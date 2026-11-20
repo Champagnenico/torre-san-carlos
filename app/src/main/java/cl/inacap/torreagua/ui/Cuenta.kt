@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
@@ -16,6 +17,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,12 +25,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import cl.inacap.torreagua.UiState
+import cl.inacap.torreagua.data.Usuario
 
 private fun txt(v: Double?): String = if (v == null) "" else if (v % 1.0 == 0.0) v.toInt().toString() else v.toString()
 
@@ -37,10 +41,15 @@ fun CuentaScreen(
     ui: UiState,
     onGuardar: (Double, Double, Double) -> Unit,
     onCrearUsuario: (String, String, String, String, Int) -> Unit,
+    onCargarUsuarios: () -> Unit,
+    onCambiarActivo: (String, Boolean) -> Unit,
     onSalir: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val p = ui.perfil
+    LaunchedEffect(p?.esAdmin) {
+        if (p?.esAdmin == true) onCargarUsuarios()
+    }
     Column(
         modifier
             .verticalScroll(rememberScrollState())
@@ -67,11 +76,75 @@ fun CuentaScreen(
             Espacio()
             Aparece(2) { NuevoUsuario(ui, onCrearUsuario) }
             Espacio()
+            Aparece(3) { ListaUsuarios(ui, onCambiarActivo) }
+            Espacio()
         }
 
         OutlinedButton(onClick = onSalir, modifier = Modifier.fillMaxWidth().height(52.dp)) {
             Text("Cerrar sesión")
         }
+    }
+}
+
+@Composable
+private fun ListaUsuarios(ui: UiState, onCambiarActivo: (String, Boolean) -> Unit) {
+    var porDesactivar by remember { mutableStateOf<Usuario?>(null) }
+
+    TarjetaBlanca {
+        Text("Usuarios", style = MaterialTheme.typography.titleMedium)
+        Espacio(4.dp)
+        Text(
+            "Una cuenta desactivada no puede ver el sistema. Cada cambio queda en la bitácora.",
+            style = MaterialTheme.typography.bodySmall,
+            color = TextoSecundario,
+        )
+        Espacio()
+        if (ui.usuarios.isEmpty()) {
+            Text("Cargando usuarios…", style = MaterialTheme.typography.bodyMedium, color = TextoSecundario)
+        }
+        ui.usuarios.forEach { u ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        u.nombre + if (u.esYo) " (tú)" else "",
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    val cargo = if (u.cargo.isNullOrBlank()) "" else "${u.cargo} · "
+                    Text(
+                        "$cargo${u.rol} · ${if (u.activo) "Activa" else "Desactivada"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextoSecundario,
+                    )
+                }
+                if (!u.esYo) {
+                    OutlinedButton(
+                        onClick = { if (u.activo) porDesactivar = u else onCambiarActivo(u.id, true) },
+                        enabled = ui.cambiandoUsuario != u.id,
+                        modifier = Modifier.height(48.dp),
+                    ) {
+                        Text(if (u.activo) "Desactivar" else "Activar")
+                    }
+                }
+            }
+        }
+    }
+
+    porDesactivar?.let { u ->
+        AlertDialog(
+            onDismissRequest = { porDesactivar = null },
+            title = { Text("¿Desactivar esta cuenta?") },
+            text = { Text("${u.nombre} dejará de ver el sistema. Puedes volver a activarla después.") },
+            confirmButton = {
+                TextButton(onClick = { onCambiarActivo(u.id, false); porDesactivar = null }) { Text("Desactivar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { porDesactivar = null }) { Text("Cancelar") }
+            },
+        )
     }
 }
 

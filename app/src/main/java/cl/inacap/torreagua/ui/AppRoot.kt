@@ -170,6 +170,8 @@ private fun Principal(vm: AppViewModel) {
                                 ui = ui,
                                 onGuardar = { l, a, c -> vm.guardarUmbrales(l, a, c) },
                                 onCrearUsuario = { c, k, n, g, r -> vm.crearUsuario(c, k, n, g, r) },
+                                onCargarUsuarios = { vm.cargarUsuarios() },
+                                onCambiarActivo = { id, a -> vm.cambiarActivo(id, a) },
                                 onSalir = { vm.cerrarSesion() },
                                 modifier = m,
                             )

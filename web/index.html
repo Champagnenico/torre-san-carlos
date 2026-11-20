@@ -115,7 +115,7 @@ const REFRESCO_MS = 3000, SIN_CONEXION_MIN = 30, CAPACIDAD_FALLBACK = 30000;
 // ---- Estado ----
 const S = { ses: cargarSesion(), perfil: null, sinAcceso: false, cargo: false, nivel: null, alertas: [], umbrales: [],
   puntos: [], horas: 24, equipos: [], eventos: [], bitacora: [], tab: "estado", aviso: null, anim: true, errRed: null,
-  errLogin: null, entrando: false, rol: 2, guardando: false, creando: false };
+  errLogin: null, entrando: false, rol: 2, guardando: false, creando: false, usuarios: [], cambiandoUsuario: null };
 
 function cargarSesion(){ try{ return JSON.parse(localStorage.getItem("torre_ses")||"null"); }catch(e){ return null; } }
 function guardarSesion(s){ S.ses=s; try{ s?localStorage.setItem("torre_ses",JSON.stringify(s)):localStorage.removeItem("torre_ses"); }catch(e){} }
@@ -216,6 +216,7 @@ async function cargarTodo(){
     if(o.accion==="CAMBIO_UMBRAL") t="Umbral "+String(d.tipo||"").toLowerCase()+" cambiado de "+d.antes+" % a "+d.despues+" %";
     else if(o.accion==="CONFIRMA_ALERTA") t="Alerta "+d.id_alerta+" confirmada";
     else if(o.accion==="CREA_USUARIO"||o.accion==="CREAR_USUARIO") t="Usuario creado: "+(d.email||"")+(ROLES[d.id_rol]?" ("+ROLES[d.id_rol]+")":"");
+    else if(o.accion==="DESACTIVA_USUARIO"||o.accion==="ACTIVA_USUARIO") t=(o.accion==="ACTIVA_USUARIO"?"Cuenta activada: ":"Cuenta desactivada: ")+(d.nombre||"");
     else t=String(o.accion).replace(/_/g," ").toLowerCase().replace(/^./,c=>c.toUpperCase());
     return {texto:t,t:ts(o.creado_en)};
   });
@@ -284,6 +285,21 @@ async function guardarUmbrales(){
   }catch(e){ S.guardando=false; avisar("No se pudo guardar: "+e.message,false); }
   refrescar();
 }
+async function cargarUsuarios(){
+  if(!esAdmin()) return;
+  try{ S.usuarios = await get("perfil?select=id_perfil,nombre,cargo,id_rol,activo&order=nombre.asc"); render(); }catch(e){}
+}
+async function cambiarActivo(id,activo){
+  if(id===S.ses.uid) return avisar("No puedes desactivar tu propia cuenta",false);
+  if(!activo && !confirm("¿Desactivar esta cuenta? La persona dejará de ver el sistema. Puedes volver a activarla después.")) return;
+  S.cambiandoUsuario=id; render();
+  try{
+    const r = await http("PATCH","/rest/v1/perfil?id_perfil=eq."+id,{activo:activo},{extra:{Prefer:"return=representation"}});
+    if(!r.length) throw new ApiError(403,"No tienes permiso para cambiar usuarios");
+    S.cambiandoUsuario=null; await cargarUsuarios();
+    avisar(activo?"Cuenta activada":"Cuenta desactivada",true);
+  }catch(e){ S.cambiandoUsuario=null; avisar("No se pudo cambiar: "+e.message,false); }
+}
 async function crearUsuario(){
   const v={n:$("n-nom").value.trim(),g:$("n-car").value.trim(),c:$("n-cor").value.trim(),k:$("n-cla").value};
   if(!v.n||!v.c||!v.k) return avisar("Completa nombre, correo y contraseña",false);
@@ -294,7 +310,7 @@ async function crearUsuario(){
   S.creando=true; render();
   try{
     await http("POST","/functions/v1/crear-usuario",{email:v.c,password:v.k,nombre:v.n,cargo:v.g,id_rol:S.rol});
-    S.creando=false; S.rol=2; avisar("Usuario creado: "+v.c,true);
+    S.creando=false; S.rol=2; avisar("Usuario creado: "+v.c,true); cargarUsuarios();
     ["n-nom","n-car","n-cor","n-cla"].forEach(i=>{ if($(i)) $(i).value=""; });
   }catch(e){ S.creando=false; avisar("No se pudo crear: "+e.message,false); }
 }
@@ -401,6 +417,17 @@ function pCuenta(){
       +'<label>Rol</label><div class="chips">'+Object.entries(ROLES).map(([id,t])=>'<button class="chip'+(S.rol==id?' sel':'')+'" data-rol="'+id+'">'+t+'</button>').join("")+'</div>'
       +'<div style="height:10px"></div><button id="b-crear"'+(S.creando?' disabled':'')+'>'+(S.creando?'<span class="spin"></span>Creando…':"Crear usuario")+'</button></div>';
   }
+  if(esAdmin()){
+    h+='<div class="card"><h2>Usuarios</h2><div class="small">Una cuenta desactivada no puede ver el sistema. Cada cambio queda en la bitácora.</div>'
+      +(S.usuarios.length?S.usuarios.map(u=>{
+        const yo=u.id_perfil===S.ses.uid, oc=S.cambiandoUsuario===u.id_perfil;
+        return '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 0;border-top:1px solid var(--borde)">'
+          +'<div><b>'+esc(u.nombre)+'</b>'+(yo?' (tú)':'')+'<div class="small">'+esc(u.cargo||"")+(u.cargo?" · ":"")+ROLES[u.id_rol]+' · '+(u.activo?"Activa":"Desactivada")+'</div></div>'
+          +(yo?'':'<button class="sec" style="width:auto;min-height:44px;padding:8px 14px" data-act="'+u.id_perfil+'" data-val="'+(u.activo?0:1)+'"'+(oc?' disabled':'')+'>'+(u.activo?"Desactivar":"Activar")+'</button>')
+          +'</div>';
+      }).join(""):'<div class="small" style="margin-top:8px">Cargando usuarios…</div>')
+      +'</div>';
+  }
   h+='<button class="sec" id="b-salir">Cerrar sesión</button>';
   return h;
 }
@@ -457,7 +484,8 @@ function renderVivo(){ // actualización automática: no toca la pestaña de for
 }
 function enlazar(){
   const on=(sel,fn)=>document.querySelectorAll(sel).forEach(el=>el.onclick=()=>fn(el));
-  on("[data-tab]",el=>{ S.tab=el.dataset.tab; S.anim=true; render(); window.scrollTo(0,0); });
+  on("[data-tab]",el=>{ S.tab=el.dataset.tab; S.anim=true; render(); window.scrollTo(0,0); if(S.tab==="cuenta") cargarUsuarios(); });
+  on("[data-act]",el=>cambiarActivo(el.dataset.act,el.dataset.val==="1"));
   on("[data-conf]",el=>{ el.disabled=true; confirmar(Number(el.dataset.conf)); });
   on("[data-horas]",el=>{ S.horas=Number(el.dataset.horas); S.anim=true; render(); refrescar(); });
   on("[data-rol]",el=>{ S.rol=Number(el.dataset.rol); render(); });

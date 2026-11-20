@@ -17,6 +17,7 @@ import cl.inacap.torreagua.data.Punto
 import cl.inacap.torreagua.data.SesionStore
 import cl.inacap.torreagua.data.SupabaseApi
 import cl.inacap.torreagua.data.Umbral
+import cl.inacap.torreagua.data.Usuario
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,6 +47,8 @@ data class UiState(
     val guardando: Boolean = false,
     val creandoUsuario: Boolean = false,
     val usuarioCreado: Int = 0,
+    val usuarios: List<Usuario> = emptyList(),
+    val cambiandoUsuario: String? = null,
 )
 
 private class Paquete(
@@ -252,6 +255,52 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 }
             } catch (e: Exception) {
                 ui = ui.copy(creandoUsuario = false, aviso = Aviso("No se pudo crear. Revisa tu conexión.", false))
+            }
+        }
+    }
+
+    fun cargarUsuarios() {
+        if (ui.perfil?.esAdmin != true) return
+        viewModelScope.launch {
+            try {
+                val lista = withContext(Dispatchers.IO) { api.usuarios() }
+                ui = ui.copy(usuarios = lista)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiException) {
+                if (e.codigo == 401) alFallar(e)
+            } catch (e: Exception) {
+                // La lista se vuelve a pedir al abrir la pantalla; no se muestra un error aparte.
+            }
+        }
+    }
+
+    fun cambiarActivo(id: String, activo: Boolean) {
+        val u = ui.usuarios.firstOrNull { it.id == id } ?: return
+        if (u.esYo) {
+            ui = ui.copy(aviso = Aviso("No puedes desactivar tu propia cuenta", false))
+            return
+        }
+        ui = ui.copy(cambiandoUsuario = id, aviso = null)
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { api.cambiarActivo(id, activo) }
+                val lista = withContext(Dispatchers.IO) { api.usuarios() }
+                ui = ui.copy(
+                    cambiandoUsuario = null,
+                    usuarios = lista,
+                    aviso = Aviso(if (activo) "Cuenta activada" else "Cuenta desactivada", true),
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ApiException) {
+                if (e.codigo == 401) {
+                    alFallar(e)
+                } else {
+                    ui = ui.copy(cambiandoUsuario = null, aviso = Aviso("No se pudo cambiar: ${e.message}", false))
+                }
+            } catch (e: Exception) {
+                ui = ui.copy(cambiandoUsuario = null, aviso = Aviso("No se pudo cambiar. Revisa tu conexión.", false))
             }
         }
     }

@@ -268,6 +268,27 @@ class SupabaseApi(private val store: SesionStore) {
         solicitar("POST", "/functions/v1/crear-usuario", cuerpo)
     }
 
+    /** Lista las cuentas (solo el Administrador las ve; las políticas RLS lo exigen). */
+    fun usuarios(): List<Usuario> {
+        val yo = sesionVigente().userId
+        val arr = get("perfil?select=id_perfil,nombre,cargo,id_rol,activo&order=nombre.asc")
+        return (0 until arr.length()).map {
+            val o = arr.getJSONObject(it)
+            val id = o.getString("id_perfil")
+            Usuario(id, o.getString("nombre"), o.texto("cargo"), o.getInt("id_rol"), o.getBoolean("activo"), id == yo)
+        }
+    }
+
+    /** Desactiva o reactiva una cuenta. Una cuenta desactivada deja de ver el sistema. */
+    fun cambiarActivo(idPerfil: String, activo: Boolean) {
+        val cuerpo = JSONObject().put("activo", activo).toString()
+        val resp = solicitar(
+            "PATCH", "/rest/v1/perfil?id_perfil=eq.$idPerfil", cuerpo,
+            extra = mapOf("Prefer" to "return=representation"),
+        )
+        if (JSONArray(resp).length() == 0) throw ApiException(403, "No tienes permiso para cambiar usuarios")
+    }
+
     /** Cambia el valor de un umbral (solo el Administrador; las políticas RLS lo exigen). */
     fun guardarUmbral(tipo: String, valor: Double) {
         val cuerpo = JSONObject().put("valor_pct", valor).toString()
@@ -316,6 +337,8 @@ class SupabaseApi(private val store: SesionStore) {
                     }
                     "Usuario creado: ${d?.optString("email", "")}" + if (rol.isNotEmpty()) " ($rol)" else ""
                 }
+                "DESACTIVA_USUARIO" -> "Cuenta desactivada: ${d?.optString("nombre", "")}"
+                "ACTIVA_USUARIO" -> "Cuenta activada: ${d?.optString("nombre", "")}"
                 else -> o.getString("accion").replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
             }
             Bitacora(texto, Fechas.parse(o.getString("creado_en")))
