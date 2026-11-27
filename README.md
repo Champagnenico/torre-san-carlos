@@ -22,4 +22,4 @@ Un nodo ESP32 con sensor ultrasónico HC-SR04 mide el nivel de la torre de 30.00
 4. **Web**: publicar la carpeta `web/` en Netlify.
 
 ## Seguridad
-No subir claves secretas ni el token del nodo. En la app solo va la clave publicable. Detalle en `docs/`.
+No subir claves secretas ni el token del nodo. En la app solo va la clave publicable. Procedimiento de rotación en [`docs/rotacion_de_claves.md`](docs/rotacion_de_claves.md) y registro en [`docs/checklist_rotacion.md`](docs/checklist_rotacion.md).
