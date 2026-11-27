@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Secretos y configuración local (nunca subir valores reales)
+config_local.h
+.env
+.env.*
+*.keystore
+*.jks
