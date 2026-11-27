@@ -306,7 +306,7 @@ async function crearUsuario(){
   if(!CORREO_VALIDO.test(v.c)) return avisar("Escribe un correo válido, por ejemplo nombre@dominio.cl",false);
   if(v.n.length<2||v.n.length>80) return avisar("El nombre debe tener entre 2 y 80 caracteres",false);
   if(v.g.length>80) return avisar("El cargo no puede superar los 80 caracteres",false);
-  if(v.k.length<8) return avisar("La contraseña debe tener al menos 8 caracteres",false);
+  if(v.k.length<12) return avisar("La contraseña debe tener al menos 12 caracteres",false);
   S.creando=true; render();
   try{
     await http("POST","/functions/v1/crear-usuario",{email:v.c,password:v.k,nombre:v.n,cargo:v.g,id_rol:S.rol});
@@ -413,7 +413,7 @@ function pCuenta(){
       +'<label for="n-nom">Nombre</label><input id="n-nom" autocomplete="off">'
       +'<label for="n-car">Cargo (ej. Capataz)</label><input id="n-car" autocomplete="off">'
       +'<label for="n-cor">Correo</label><input id="n-cor" type="email" autocomplete="off" autocapitalize="off">'
-      +'<label for="n-cla">Contraseña (mínimo 8)</label><input id="n-cla" type="password" autocomplete="new-password">'
+      +'<label for="n-cla">Contraseña (mínimo 12)</label><input id="n-cla" type="password" autocomplete="new-password">'
       +'<label>Rol</label><div class="chips">'+Object.entries(ROLES).map(([id,t])=>'<button class="chip'+(S.rol==id?' sel':'')+'" data-rol="'+id+'">'+t+'</button>').join("")+'</div>'
       +'<div style="height:10px"></div><button id="b-crear"'+(S.creando?' disabled':'')+'>'+(S.creando?'<span class="spin"></span>Creando…':"Crear usuario")+'</button></div>';
   }
