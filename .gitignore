@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Firmware: Wi-Fi y token del nodo (nunca subir)
+config_local.h
