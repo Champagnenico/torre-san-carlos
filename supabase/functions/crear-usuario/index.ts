@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
   const idRol = Number(b.id_rol);
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "Correo no válido" }, 400);
-  if (password.length < 8) return json({ error: "La contraseña debe tener al menos 8 caracteres" }, 400);
+  if (password.length < 12) return json({ error: "La contraseña debe tener al menos 12 caracteres" }, 400);
   if (nombre.length < 2 || nombre.length > 80) return json({ error: "Escribe el nombre (2 a 80 letras)" }, 400);
   if (cargo.length > 80) return json({ error: "El cargo es demasiado largo" }, 400);
   if (![1, 2, 3, 4].includes(idRol)) return json({ error: "Rol no válido" }, 400);

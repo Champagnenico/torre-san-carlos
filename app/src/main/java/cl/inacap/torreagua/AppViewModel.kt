@@ -230,8 +230,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             ui = ui.copy(aviso = Aviso("Completa nombre, correo y contraseña", false))
             return
         }
-        if (clave.length < 8) {
-            ui = ui.copy(aviso = Aviso("La contraseña debe tener al menos 8 caracteres", false))
+        if (clave.length < 12) {
+            ui = ui.copy(aviso = Aviso("La contraseña debe tener al menos 12 caracteres", false))
             return
         }
         ui = ui.copy(creandoUsuario = true, aviso = null)
