@@ -19,6 +19,28 @@
 
 const char* DEV_EUI = "nodo-torre-01";   // debe existir en la tabla nodo
 
+// Certificado raíz/emisor (WE1 - Google Trust Services) para validar HTTPS de Supabase
+// Válido hasta: 20/02/2029
+const char* SUPABASE_CA_CERT = R"EOF(
+-----BEGIN CERTIFICATE-----
+MIICnzCCAiWgAwIBAgIQf/MZd5csIkp2FV0TttaF4zAKBggqhkjOPQQDAzBHMQsw
+CQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEU
+MBIGA1UEAxMLR1RTIFJvb3QgUjQwHhcNMjMxMjEzMDkwMDAwWhcNMjkwMjIwMTQw
+MDAwWjA7MQswCQYDVQQGEwJVUzEeMBwGA1UEChMVR29vZ2xlIFRydXN0IFNlcnZp
+Y2VzMQwwCgYDVQQDEwNXRTEwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARvzTr+
+Z1dHTCEDhUDCR127WEcPQMFcF4XGGTfn1XzthkubgdnXGhOlCgP4mMTG6J7/EFmP
+LCaY9eYmJbsPAvpWo4H+MIH7MA4GA1UdDwEB/wQEAwIBhjAdBgNVHSUEFjAUBggr
+BgEFBQcDAQYIKwYBBQUHAwIwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNVHQ4EFgQU
+kHeSNWfE/6jMqeZ72YB5e8yT+TgwHwYDVR0jBBgwFoAUgEzW63T/STaj1dj8tT7F
+avCUHYwwNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzAChhhodHRwOi8vaS5wa2ku
+Z29vZy9yNC5jcnQwKwYDVR0fBCQwIjAgoB6gHIYaaHR0cDovL2MucGtpLmdvb2cv
+ci9yNC5jcmwwEwYDVR0gBAwwCjAIBgZngQwBAgEwCgYIKoZIzj0EAwMDaAAwZQIx
+AOcCq1HW90OVznX+0RGU1cxAQXomvtgM8zItPZCuFQ8jSBJSjz5keROv9aYsAm5V
+sQIwJonMaAFi54mrfhfoFNZEfuNMSQ6/bIBiNLiyoX46FohQvKeIoJ99cx7sUkFN
+7uJW
+-----END CERTIFICATE-----
+)EOF";
+
 // Pines (Anexo C del informe)
 const int TRIG_PIN = 5;
 const int ECHO_PIN = 18;
@@ -133,7 +155,7 @@ int enviar(const Pendiente& p) {
   if (WiFi.status() != WL_CONNECTED) return -1;
 
   WiFiClientSecure client;
-  client.setInsecure();   // PENDIENTE: reemplazar por client.setCACert(...) antes de la entrega final
+  client.setCACert(SUPABASE_CA_CERT);
 
   HTTPClient http;
   http.setTimeout(8000);
