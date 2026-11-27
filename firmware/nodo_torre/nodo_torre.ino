@@ -2,20 +2,23 @@
 // Mide 7 veces, toma la mediana, muestra nivel y estado en la pantalla y envía la
 // distancia a la Edge Function recibir-lectura de Supabase. Si no hay Wi-Fi guarda
 // hasta 48 mediciones y las reenvía con su antigüedad (edad_min).
-// Requiere la biblioteca "LiquidCrystal I2C" (Frank de Brabander) y
-// los datos de Wi-Fi y token de abajo (para la entrega, moverlos a config_local.h).
+// La conexión HTTPS se valida con el certificado raíz de certificado_raiz.h
+// (ver docs/certificado_ssl.md).
+// Requiere la biblioteca "LiquidCrystal I2C" (Frank de Brabander) y un archivo
+// config_local.h con el Wi-Fi y el token (copiar config_local.example.h; ese
+// archivo NO se sube a GitHub).
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+#include <time.h>
+#include "config_local.h"       // WIFI_SSID, WIFI_PASS y TOKEN_NODO (no se sube a GitHub)
+#include "certificado_raiz.h"   // ROOT_CA_SUPABASE (certificado público, sí se sube)
 
-// ---- Configuración (completa solo tu Wi-Fi: 2,4 GHz) ----
-#define WIFI_SSID      "TU_WIFI"
-#define WIFI_PASS      "TU_CLAVE_WIFI"
+// ---- Configuración ----
 #define SUPABASE_URL   "https://tzjziqjrxgquzkjbldml.supabase.co"
-#define TOKEN_NODO     "PEGAR_TOKEN_DEL_NODO"
 
 const char* DEV_EUI = "nodo-torre-01";   // debe existir en la tabla nodo
 
@@ -128,12 +131,32 @@ void quitarPrimero() {
   nCola--;
 }
 
+// Para validar el certificado el ESP32 necesita la hora real (sin NTP cree que es 1970
+// y rechaza el certificado por "aún no válido"). 1700000000 = nov-2023, cualquier hora
+// anterior significa que todavía no se sincronizó.
+const time_t HORA_MINIMA = 1700000000;
+bool ntpIniciado = false;
+bool horaAvisada = false;
+
+bool horaValida() {
+  if (!ntpIniciado) {
+    configTime(0, 0, "pool.ntp.org", "time.google.com");   // UTC; solo se usa para validar el certificado
+    ntpIniciado = true;
+  }
+  for (int i = 0; i < 20 && time(nullptr) < HORA_MINIMA; i++) delay(250);   // espera hasta 5 s
+  bool ok = time(nullptr) >= HORA_MINIMA;
+  if (!ok) Serial.println("Sin hora NTP todavia: se reintenta");
+  else if (!horaAvisada) { Serial.println("Hora sincronizada"); horaAvisada = true; }
+  return ok;
+}
+
 // Devuelve el código HTTP (201 = guardado, 200 = repetida); negativo si no hubo conexión
 int enviar(const Pendiente& p) {
   if (WiFi.status() != WL_CONNECTED) return -1;
+  if (!horaValida()) return -1;
 
   WiFiClientSecure client;
-  client.setInsecure();   // PENDIENTE: reemplazar por client.setCACert(...) antes de la entrega final
+  client.setCACert(ROOT_CA_SUPABASE);   // valida que el servidor sea realmente Supabase
 
   HTTPClient http;
   http.setTimeout(8000);
@@ -146,7 +169,13 @@ int enviar(const Pendiente& p) {
                   ",\"distancia_mm\":" + p.mm + ",\"edad_min\":" + edadMin + "}";
   int codigo = http.POST(cuerpo);
   Serial.printf("POST %s -> %d\n", cuerpo.c_str(), codigo);
-  if (codigo > 0) Serial.println(http.getString());
+  if (codigo > 0) {
+    Serial.println(http.getString());
+  } else {
+    char err[100];                      // motivo del fallo TLS (certificado, hora, etc.)
+    client.lastError(err, sizeof(err));
+    Serial.printf("Fallo de conexion: %s\n", err);
+  }
   http.end();
   return codigo;
 }
@@ -182,6 +211,9 @@ void setup() {
   lcd.clear();
   linea(0, "Iniciando...");
   Serial.println("Iniciando medicion...");
+  if (strstr(ROOT_CA_SUPABASE, "PEGAR_AQUI")) {
+    Serial.println("FALTA el certificado raiz: completar certificado_raiz.h (docs/certificado_ssl.md)");
+  }
   conectarWiFi();
 }
 
